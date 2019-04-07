@@ -11,8 +11,11 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+                    android:maxSdkVersion="18"/>
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <uses-feature android:name="android.hardware.camera"
+        android:required="true"/>
 
     <permission
         android:name="com.example.piccarto.permission.MAPS_RECEIVE"
@@ -43,6 +46,7 @@
             android:label="@string/title_activity_maps" >
 
         </activity>
+
         <activity
             android:name=".SignOnActivity"
             android:label="SignOn">
@@ -55,6 +59,19 @@
 
 
         </activity>
+        <activity android:name=".DisplayImageActivity" />
+        <activity android:name=".MainActivity" />
+
+        <provider
+            android:authorities="com.example.android.fileprovider"
+            android:name="android.support.v4.content.FileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+
     </application>
 
 </manifest>

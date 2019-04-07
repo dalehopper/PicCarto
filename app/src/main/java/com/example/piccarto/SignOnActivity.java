@@ -73,7 +73,7 @@ public class SignOnActivity extends AppCompatActivity implements View.OnClickLis
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Intent intent = new Intent(SignOnActivity.this, MapsActivity.class);
+                    Intent intent = new Intent(SignOnActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();
                 }
