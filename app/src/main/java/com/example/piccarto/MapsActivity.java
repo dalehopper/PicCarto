@@ -16,13 +16,14 @@ import static java.lang.Boolean.TRUE;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    //private FusedLocationProviderClient mFusedLocationProviderClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
-        //setContentView(R.layout.activity_maps);
+        setContentView(R.layout.activity_maps);
 
 
 

@@ -1,5 +1,6 @@
 package com.example.piccarto;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
@@ -74,7 +75,10 @@ public class DisplayImageActivity extends AppCompatActivity {
                         long clickDuration = event.getEventTime() - event.getDownTime();
                         if(clickDuration < 200) {
                             //click event has occurred
-                        getPixel(event, view);}
+                            getPixel(event, view);
+                            Intent intent = new Intent(DisplayImageActivity.this, MapsActivity.class);
+                            startActivity(intent);
+                        }
 
                     case MotionEvent.ACTION_POINTER_UP:
                         mode = NONE;
