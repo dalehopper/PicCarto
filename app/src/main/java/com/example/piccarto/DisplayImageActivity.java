@@ -11,6 +11,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import com.example.piccarto.Touch;
+import com.google.android.gms.location.FusedLocationProviderClient;
+
 import android.graphics.Matrix;
 import android.widget.Toast;
 
@@ -19,8 +21,9 @@ import java.util.Calendar;
 
 public class DisplayImageActivity extends AppCompatActivity {
     ImageView imageView;
-    ArrayList<Float> coords = new ArrayList<>();
+    ArrayList<PointF> coords = new ArrayList<>();
     float[] values = new float[9];
+    int pointCount = 0;
 
     // We can be in one of these 3 states
     static final int NONE = 0;
@@ -33,12 +36,14 @@ public class DisplayImageActivity extends AppCompatActivity {
 
     int mode = NONE;
 
+
     // Remember some things for zooming
     PointF start = new PointF();
     PointF mid = new PointF();
+    PointF tempPoint = new PointF();
     float oldDist = 1f;
 
-
+    private FusedLocationProviderClient mFusedLocationClient;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,9 +80,15 @@ public class DisplayImageActivity extends AppCompatActivity {
                         long clickDuration = event.getEventTime() - event.getDownTime();
                         if(clickDuration < 200) {
                             //click event has occurred
-                            getPixel(event, view);
-                            Intent intent = new Intent(DisplayImageActivity.this, MapsActivity.class);
-                            startActivity(intent);
+                            getPixel(event, view, tempPoint);
+                            coords.add(tempPoint);
+                            if(coords.size() >1) {
+                                Intent intent = new Intent(DisplayImageActivity.this, MapsActivity.class);
+                                intent.putExtra("POINTS", coords);
+                                startActivity(intent);
+                            }
+                            break;
+
                         }
 
                     case MotionEvent.ACTION_POINTER_UP:
@@ -120,12 +131,13 @@ public class DisplayImageActivity extends AppCompatActivity {
                 float y = event.getY(0) + event.getY(1);
                 point.set(x / 2, y / 2);
             }
-            private ArrayList<Float> getPixel(MotionEvent event, ImageView imageView){
+            private void getPixel(MotionEvent event, ImageView imageView, PointF point){
 
                 // Get the values of the matrix
 
 
-                imageView.getMatrix().getValues(values);
+                //imageView.getMatrix().getValues(values);
+                matrix.getValues(values);
 
                 // values[2] and values[5] are the x,y coordinates of the top left corner of the drawable image, regardless of the zoom factor.
                 // values[0] and values[4] are the zoom factors for the image's width and height respectively. If you zoom at the same factor, these should both be the same value.
@@ -134,15 +146,14 @@ public class DisplayImageActivity extends AppCompatActivity {
                 float relativeX = (event.getX() - values[2]) / values[0];
                 float relativeY = (event.getY() - values[5]) / values[4];
                 Toast toast = Toast.makeText(getApplicationContext(),
-                        "getPixel ran",
+                        relativeX + "," + relativeY,
                         Toast.LENGTH_SHORT);
 
                 toast.show();
 
 
-                coords.add(relativeX);
-                coords.add(relativeY);
-                return coords;
+                point.set(relativeX,relativeY);
+
             }
         });
     }
