@@ -1,17 +1,24 @@
 package com.example.piccarto;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import com.example.piccarto.Touch;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.maps.model.LatLng;
 
 import android.graphics.Matrix;
 import android.widget.Toast;
@@ -20,6 +27,19 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 public class DisplayImageActivity extends AppCompatActivity {
+    double longitude;
+    double latitude;
+    LatLng loc;
+
+
+
+
+
+
+
+
+
+
     ImageView imageView;
     ArrayList<PointF> coords = new ArrayList<>();
     float[] values = new float[9];
@@ -43,7 +63,7 @@ public class DisplayImageActivity extends AppCompatActivity {
     PointF tempPoint = new PointF();
     float oldDist = 1f;
 
-    private FusedLocationProviderClient mFusedLocationClient;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +71,7 @@ public class DisplayImageActivity extends AppCompatActivity {
         imageView = findViewById(R.id.mimageView);
         Bitmap bitmap = BitmapFactory.decodeFile(getIntent().getStringExtra("image_path"));
         imageView.setImageBitmap(bitmap);
+
 
 
         imageView.setOnTouchListener(new View.OnTouchListener() {
@@ -82,6 +103,8 @@ public class DisplayImageActivity extends AppCompatActivity {
                             //click event has occurred
                             getPixel(event, view, tempPoint);
                             coords.add(tempPoint);
+
+
                             if(coords.size() >1) {
                                 Intent intent = new Intent(DisplayImageActivity.this, MapsActivity.class);
                                 intent.putExtra("POINTS", coords);
@@ -132,11 +155,7 @@ public class DisplayImageActivity extends AppCompatActivity {
                 point.set(x / 2, y / 2);
             }
             private void getPixel(MotionEvent event, ImageView imageView, PointF point){
-
                 // Get the values of the matrix
-
-
-                //imageView.getMatrix().getValues(values);
                 matrix.getValues(values);
 
                 // values[2] and values[5] are the x,y coordinates of the top left corner of the drawable image, regardless of the zoom factor.
@@ -145,16 +164,24 @@ public class DisplayImageActivity extends AppCompatActivity {
                 // event is the touch event for MotionEvent.ACTION_UP
                 float relativeX = (event.getX() - values[2]) / values[0];
                 float relativeY = (event.getY() - values[5]) / values[4];
+
+
+
+
+                LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+                Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                double longitude = location.getLongitude();
+                double latitude = location.getLatitude();
                 Toast toast = Toast.makeText(getApplicationContext(),
-                        relativeX + "," + relativeY,
-                        Toast.LENGTH_SHORT);
+                        relativeX + "," + relativeY +" ; " + latitude + ", " +longitude ,
+                        Toast.LENGTH_LONG);
 
                 toast.show();
-
-
-                point.set(relativeX,relativeY);
 
             }
         });
     }
+
+
+
 }
