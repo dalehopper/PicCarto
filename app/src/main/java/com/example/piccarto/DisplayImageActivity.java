@@ -1,6 +1,7 @@
 package com.example.piccarto;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -9,7 +10,11 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -17,29 +22,23 @@ import android.view.View;
 import android.widget.ImageView;
 import com.example.piccarto.Touch;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationListener;
+import android.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
-
 import android.graphics.Matrix;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-public class DisplayImageActivity extends AppCompatActivity {
+public class DisplayImageActivity extends AppCompatActivity implements Serializable {
     double longitude;
     double latitude;
-    LatLng loc;
 
-
-
-
-
-
-
-
-
-
+    ArrayList<LatLng> gpsCoords = new ArrayList<>();
+    PointF knownPoint = new PointF();
+    String currentPhotoPath;
     ImageView imageView;
     ArrayList<PointF> coords = new ArrayList<>();
     float[] values = new float[9];
@@ -64,16 +63,17 @@ public class DisplayImageActivity extends AppCompatActivity {
     float oldDist = 1f;
 
 
+
+    LocationManager locationManager;
+    Context mContext;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image);
         imageView = findViewById(R.id.mimageView);
-        Bitmap bitmap = BitmapFactory.decodeFile(getIntent().getStringExtra("image_path"));
+        currentPhotoPath = getIntent().getStringExtra("image_path");
+        final Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
         imageView.setImageBitmap(bitmap);
-
-
-
         imageView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -99,15 +99,18 @@ public class DisplayImageActivity extends AppCompatActivity {
                         break;
                     case MotionEvent.ACTION_UP:
                         long clickDuration = event.getEventTime() - event.getDownTime();
-                        if(clickDuration < 200) {
+                        if (clickDuration < 200) {
                             //click event has occurred
                             getPixel(event, view, tempPoint);
-                            coords.add(tempPoint);
 
 
-                            if(coords.size() >1) {
+
+                            if (coords.size() > 1) {
                                 Intent intent = new Intent(DisplayImageActivity.this, MapsActivity.class);
-                                intent.putExtra("POINTS", coords);
+
+                                intent.putExtra("points", coords);
+                                intent.putExtra("gps", gpsCoords);
+                                intent.putExtra("path", currentPhotoPath);
                                 startActivity(intent);
                             }
                             break;
@@ -138,23 +141,25 @@ public class DisplayImageActivity extends AppCompatActivity {
             }
 
 
-
-
-
-            /** Determine the space between the first two fingers */
+            /**
+             * Determine the space between the first two fingers
+             */
             private float spacing(MotionEvent event) {
                 float x = event.getX(0) - event.getX(1);
                 float y = event.getY(0) - event.getY(1);
-                return (float)Math.sqrt(x * x + y * y);
+                return (float) Math.sqrt(x * x + y * y);
             }
 
-            /** Calculate the mid point of the first two fingers */
+            /**
+             * Calculate the mid point of the first two fingers
+             */
             private void midPoint(PointF point, MotionEvent event) {
                 float x = event.getX(0) + event.getX(1);
                 float y = event.getY(0) + event.getY(1);
                 point.set(x / 2, y / 2);
             }
-            private void getPixel(MotionEvent event, ImageView imageView, PointF point){
+
+            private void getPixel(MotionEvent event, ImageView imageView, PointF point) {
                 // Get the values of the matrix
                 matrix.getValues(values);
 
@@ -166,22 +171,92 @@ public class DisplayImageActivity extends AppCompatActivity {
                 float relativeY = (event.getY() - values[5]) / values[4];
 
 
-
-
-                LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-                Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                double longitude = location.getLongitude();
-                double latitude = location.getLatitude();
                 Toast toast = Toast.makeText(getApplicationContext(),
-                        relativeX + "," + relativeY +" ; " + latitude + ", " +longitude ,
+                        relativeX + "," + relativeY + " ; " + latitude + ", " + longitude,
                         Toast.LENGTH_LONG);
 
                 toast.show();
+                LatLng loc;
+                loc = new LatLng(latitude,longitude);
+                gpsCoords.add(loc);
+                knownPoint.set(relativeX,relativeY);
+                coords.add(knownPoint);
 
             }
         });
+
+        mContext=this;
+        locationManager=(LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates( LocationManager.GPS_PROVIDER,
+                1000,
+                2, locationListenerGPS);
+        isLocationEnabled();
+
+    }
+    LocationListener locationListenerGPS=new LocationListener() {
+        @Override
+        public void onLocationChanged(android.location.Location location) {
+            latitude=location.getLatitude();
+            longitude=location.getLongitude();
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
+
+
+    protected void onResume(){
+        super.onResume();
+        isLocationEnabled();
+    }
+
+    private void isLocationEnabled() {
+
+        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+            AlertDialog.Builder alertDialog=new AlertDialog.Builder(mContext);
+            alertDialog.setTitle("Enable Location");
+            alertDialog.setMessage("Your locations setting is not enabled. Please enabled it in settings menu.");
+            alertDialog.setPositiveButton("Location Settings", new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int which){
+                    Intent intent=new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(intent);
+                }
+            });
+            alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int which){
+                    dialog.cancel();
+                }
+            });
+            AlertDialog alert=alertDialog.create();
+            alert.show();
+        }
+        else{
+            AlertDialog.Builder alertDialog=new AlertDialog.Builder(mContext);
+            alertDialog.setTitle("Confirm Location");
+            alertDialog.setMessage("Your Location is enabled, please enjoy");
+            alertDialog.setNegativeButton("Back to interface",new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int which){
+                    dialog.cancel();
+                }
+            });
+            AlertDialog alert=alertDialog.create();
+            alert.show();
+        }
     }
 
 
-
 }
+
+
