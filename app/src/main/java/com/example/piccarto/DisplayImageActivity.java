@@ -35,12 +35,13 @@ import java.util.Calendar;
 public class DisplayImageActivity extends AppCompatActivity implements Serializable {
     double longitude;
     double latitude;
+    int nextIndex = 0;
 
-    ArrayList<LatLng> gpsCoords = new ArrayList<>();
+    double[] gpsCoords = new double[4];
     PointF knownPoint = new PointF();
     String currentPhotoPath;
     ImageView imageView;
-    ArrayList<PointF> coords = new ArrayList<>();
+    float[] coords = new float[4];
     float[] values = new float[9];
     int pointCount = 0;
 
@@ -105,7 +106,7 @@ public class DisplayImageActivity extends AppCompatActivity implements Serializa
 
 
 
-                            if (coords.size() > 1) {
+                            if (coords[3] >0) {
                                 Intent intent = new Intent(DisplayImageActivity.this, MapsActivity.class);
 
                                 intent.putExtra("points", coords);
@@ -178,9 +179,11 @@ public class DisplayImageActivity extends AppCompatActivity implements Serializa
                 toast.show();
                 LatLng loc;
                 loc = new LatLng(latitude,longitude);
-                gpsCoords.add(loc);
-                knownPoint.set(relativeX,relativeY);
-                coords.add(knownPoint);
+                gpsCoords[nextIndex]=(latitude);
+                gpsCoords[nextIndex+1]=(longitude);
+                coords[nextIndex]=(relativeX);
+                coords[nextIndex+1]=(relativeY);
+                nextIndex+=2;
 
             }
         });
