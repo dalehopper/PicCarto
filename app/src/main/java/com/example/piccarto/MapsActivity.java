@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
+import static java.lang.Math.atan;
 import static java.lang.Math.atan2;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -37,7 +38,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LatLng sw, ne, latlng1, latlng2, latlng3, latlng4;
     BitmapDescriptor bitmap;
     Bitmap image;
-    Float x1, x2, y1, y2, bearing, height, width;
+    Float x1, x2, y1, y2, bearing, height, width, dy, dx;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +64,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         x2 = coords[2];
         y1 = coords[1];
         y2 = coords[3];
+        dy=y1-y2;
+        dx = x2-x1;
         Double G = abs(a2-a1)/(double)abs(y2-y1);
         Double g = abs(o2-o1)/(double)abs(x2-x1);
         Double Asw = a1 - G*(image.getHeight()-(double)y1);
@@ -79,10 +82,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         width = (float)SphericalUtil.computeDistanceBetween(latlng1, latlng4)*image.getWidth()/abs(x2-x1);
 
         Double heading = SphericalUtil.computeHeading(latlng1,latlng2);
-        //Double slope = (double)((x2-x1)/(y1-y2)); // y coordinates reversed due to reversal of y direction for photos (x and y flipped to make in relation to N)
-        Float photoHeading = (float) ((atan2(x2 - x1, y1 - y2) * 180) / PI);
-
-            bearing = (float) (photoHeading + heading + 360) % 360;
+        //Double slope = (double)((x2-x1)/(y1-y2)); // y coordinates reversed due to reversal of y direction for photos
+        Float photoHeading = (float) ((atan2(dy,dx) * 180) / PI);
+        bearing = (float) (heading -photoHeading + 90+720)%360;
+/*
+            if(dy<0 & dx <0){
+                bearing = (float) (heading -photoHeading + 90);
+            }
+            if(dy >0 & dx <0) {
+                bearing = (float) (heading - photoHeading + 90 );
+            }
+            if(dy<0 & dx >0){
+                bearing = (float) (heading - photoheading + 90);
+            }else {
+                bearing = (float) (heading - photoheading + 90);
+            }
+*/
 
 
 
