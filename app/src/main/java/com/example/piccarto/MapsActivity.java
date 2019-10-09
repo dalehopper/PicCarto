@@ -84,7 +84,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Double heading = SphericalUtil.computeHeading(latlng1,latlng2);
         //Double slope = (double)((x2-x1)/(y1-y2)); // y coordinates reversed due to reversal of y direction for photos
         Float photoHeading = (float) ((atan2(dy,dx) * 180) / PI);
-        bearing = (float) (heading -photoHeading + 90+720)%360;
+        bearing = (float) (heading + photoHeading + 270 +720)%360;
 /*
             if(dy<0 & dx <0){
                 bearing = (float) (heading -photoHeading + 90);
