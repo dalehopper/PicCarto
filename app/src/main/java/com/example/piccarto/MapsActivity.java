@@ -30,15 +30,19 @@ import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.atan;
 import static java.lang.Math.atan2;
+import static java.lang.Math.cos;
+import static java.lang.Math.pow;
+import static java.lang.Math.sin;
+import static java.lang.Math.sqrt;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    //private FusedLocationProviderClient mFusedLocationProviderClient;
-    LatLng sw, ne, latlng1, latlng2, latlng3, latlng4;
+    //private FusedLocationProviderClient mFusedLocationPrviderClient;
+    LatLng sw, ne, latlng1, latlng2, latlng1a, latlng1o;
     BitmapDescriptor bitmap;
     Bitmap image;
-    Float x1, x2, y1, y2, bearing, height, width, dy, dx;
+    Float x1, x2, y1, y2, bearing, height, width, dy, dx, scaleR,gpsR;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,31 +80,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ne = new LatLng(Ane, One);
         latlng1 = new LatLng(a1, o1);
         latlng2 = new LatLng(a2,o2);
-        latlng3 = new LatLng(a2,o1);
-        latlng4 = new LatLng(a1,o2);
-        height = (float)SphericalUtil.computeDistanceBetween(latlng1,latlng3)*image.getHeight()/abs(y2-y1);
-        width = (float)SphericalUtil.computeDistanceBetween(latlng1, latlng4)*image.getWidth()/abs(x2-x1);
+        latlng1a = new LatLng(a1+0.1,o1);
+        latlng1o = new LatLng(a1,o1+0.1);
+        scaleR = (float)SphericalUtil.computeDistanceBetween(latlng1,latlng2)/ (float)sqrt(pow(dx,2)+pow(dy,2));
+        //gpsR= (float)SphericalUtil.computeDistanceBetween(latlng1,latlng1a)/(float)SphericalUtil.computeDistanceBetween(latlng1,latlng1o);
+        //gpsR represents ratio of a change in latitude to an equal change in longitude (used to scale x and y differing amounts)
+
 
         Double heading = SphericalUtil.computeHeading(latlng1,latlng2);
         //Double slope = (double)((x2-x1)/(y1-y2)); // y coordinates reversed due to reversal of y direction for photos
         Float photoHeading = (float) ((atan2(dy,dx) * 180) / PI);
+
         bearing = (float) (heading + photoHeading + 270 +720)%360;
-/*
-            if(dy<0 & dx <0){
-                bearing = (float) (heading -photoHeading + 90);
-            }
-            if(dy >0 & dx <0) {
-                bearing = (float) (heading - photoHeading + 90 );
-            }
-            if(dy<0 & dx >0){
-                bearing = (float) (heading - photoheading + 90);
-            }else {
-                bearing = (float) (heading - photoheading + 90);
-            }
-*/
-
-
-
+       // height = scaleR*image.getHeight()*(float)(1+(gpsR-1)*sin(bearing));
+       // width = scaleR*image.getWidth()*(float)(1+(1/gpsR-1)*cos(bearing));
+        width = scaleR*image.getWidth();
 
   /*      Toast toast = Toast.makeText(getApplicationContext(),
                 Asw.toString() + ", " + Osw.toString() +":"+ Ane.toString()+", "+ One.toString()+", "+ x1.toString()+", "+ x2.toString(),
@@ -146,7 +140,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .image(bitmap)
                 .anchor(x1/image.getWidth(), y1/image.getHeight())
                 .bearing(bearing)
-                .position(latlng1,width,height);
+                .position(latlng1,width);
+                //,height);
 
                 //.positionFromBounds(customBounds);
         googleMap.addGroundOverlay(customMap);
