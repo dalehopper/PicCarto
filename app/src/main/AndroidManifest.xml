@@ -59,7 +59,7 @@
 
 
         </activity>
-        <activity android:name=".DisplayImageActivity" />
+        <activity android:name=".CreateOverlayActivity" />
         <activity android:name=".MainActivity" />
 
         <provider

@@ -3,40 +3,48 @@ package com.example.piccarto;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
-import android.location.Criteria;
-import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
-import com.example.piccarto.Touch;
-import com.google.android.gms.location.FusedLocationProviderClient;
 import android.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.maps.android.SphericalUtil;
+
 import android.graphics.Matrix;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.List;
+import android.Manifest;
 
-public class DisplayImageActivity extends AppCompatActivity implements Serializable {
+import androidx.room.Room;
+
+import static java.lang.Math.PI;
+import static java.lang.Math.atan2;
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
+
+public class CreateOverlayActivity extends AppCompatActivity implements Serializable {
+    Float x1, x2, y1, y2, bearing, height, width, dy, dx, scaleR,gpsR;
+    LatLng latlng1;
+    LatLng latlng2;
+    //Bitmap image;
     double longitude;
     double latitude;
-    int nextIndex = 0;
 
+    int nextIndex = 0, overlayID;
+    List<LatLng> latLngs = new ArrayList<LatLng>();
     double[] gpsCoords = new double[4];
     PointF knownPoint = new PointF();
     String currentPhotoPath;
@@ -44,6 +52,7 @@ public class DisplayImageActivity extends AppCompatActivity implements Serializa
     float[] coords = new float[4];
     float[] values = new float[9];
     int pointCount = 0;
+
 
     // We can be in one of these 3 states
     static final int NONE = 0;
@@ -67,14 +76,34 @@ public class DisplayImageActivity extends AppCompatActivity implements Serializa
 
     LocationManager locationManager;
     Context mContext;
+    OverlayDao overlayDao;
+    Bitmap bitmap;
+    private static final String[] INITIAL_PERMS={
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+    private static final String[] LOCATION_PERMS={
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+    private static final int INITIAL_REQUEST=1337;
+    private static final int LOCATION_REQUEST=1338;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        AppDatabase database = Room.databaseBuilder(this, AppDatabase.class, "overlay-database")
+                .allowMainThreadQueries()
+                .build();
+        overlayDao = database.overlayDao();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image);
+        if (!canAccessLocation()) {
+            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+        }
         imageView = findViewById(R.id.mimageView);
-        currentPhotoPath = getIntent().getStringExtra("image_path");
-        final Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
+
+        Intent mIntent = getIntent();
+        currentPhotoPath = mIntent.getStringExtra("currentPhotoPath");
+        bitmap = BitmapFactory.decodeFile(currentPhotoPath);
         imageView.setImageBitmap(bitmap);
+
         imageView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -107,11 +136,39 @@ public class DisplayImageActivity extends AppCompatActivity implements Serializa
 
 
                             if (coords[3] >0) {
-                                Intent intent = new Intent(DisplayImageActivity.this, MapsActivity.class);
+                                x1 = coords[0];
+                                x2 = coords[2];
+                                y1 = coords[1];
+                                y2 = coords[3];
+                                dy=y1-y2;
+                                dx = x2-x1;
+                                latlng1 = latLngs.get(0);
+                                latlng2 = latLngs.get(1);
+                                Double heading = SphericalUtil.computeHeading(latlng1,latlng2);
+                                //Double slope = (double)((x2-x1)/(y1-y2)); // y coordinates reversed due to reversal of y direction for photos
+                                Float photoHeading = (float) ((atan2(dy,dx) * 180) / PI);
 
-                                intent.putExtra("points", coords);
+                                bearing = (float) (heading + photoHeading + 270 +720)%360;
+                                // height = scaleR*image.getHeight()*(float)(1+(gpsR-1)*sin(bearing));
+                                // width = scaleR*image.getWidth()*(float)(1+(1/gpsR-1)*cos(bearing));
+                                scaleR = (float) (SphericalUtil.computeDistanceBetween(latlng1,latlng2)/sqrt(pow(dx,2)+pow(dy,2)));
+                                width = scaleR*bitmap.getWidth();
+                                Overlay overlay = new Overlay();
+                                overlay.setPhotoPath(currentPhotoPath);
+                                overlay.setBearing(bearing);
+                                overlay.setWidth(width);
+                                overlay.setAnchorX(x1/bitmap.getWidth());
+                                overlay.setAnchorY(y1/bitmap.getHeight());
+                                overlay.setPosition0(latlng1.longitude);
+                                overlay.setPositionA(latlng1.latitude);
+
+                                ;
+                                Intent intent = new Intent(CreateOverlayActivity.this, MapsActivity.class);
+                                intent.putExtra("overlayID", (int) overlayDao.insert(overlay));
+                                /*intent.putExtra("points", coords);
                                 intent.putExtra("gps", gpsCoords);
-                                intent.putExtra("path", currentPhotoPath);
+                                intent.putExtra("path", currentPhotoPath);*/
+
                                 startActivity(intent);
                             }
                             break;
@@ -179,8 +236,9 @@ public class DisplayImageActivity extends AppCompatActivity implements Serializa
                 toast.show();
                 LatLng loc;
                 loc = new LatLng(latitude,longitude);
-                gpsCoords[nextIndex]=(latitude);
-                gpsCoords[nextIndex+1]=(longitude);
+                latLngs.add(loc);
+               // gpsCoords[nextIndex]=(latitude);
+                //gpsCoords[nextIndex+1]=(longitude);
                 coords[nextIndex]=(relativeX);
                 coords[nextIndex+1]=(relativeY);
                 nextIndex+=2;
@@ -223,6 +281,12 @@ public class DisplayImageActivity extends AppCompatActivity implements Serializa
     protected void onResume(){
         super.onResume();
         isLocationEnabled();
+    }
+    private boolean canAccessLocation() {
+        return(hasPermission(Manifest.permission.ACCESS_FINE_LOCATION));
+    }
+    private boolean hasPermission(String perm) {
+        return(PackageManager.PERMISSION_GRANTED==checkSelfPermission(perm));
     }
 
     private void isLocationEnabled() {

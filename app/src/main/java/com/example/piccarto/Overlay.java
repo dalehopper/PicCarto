@@ -1,28 +1,47 @@
 package com.example.piccarto;
 
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
+@Entity(tableName = "overlays")
 public class Overlay {
     //fields
+    @PrimaryKey (autoGenerate = true)
     private int overlayID;
-    private byte[] imageByteArray;
-    private float anchorX, anchorY, height, width, bearing;
-    private double positionA, position0;
+    @ColumnInfo(name = "photo_path")//apparently it is unnecessary to annotate each field unless column name is different that variable name
+    private String photoPath;
+    @ColumnInfo(name = "anchorX")
+    private float anchorX;
+    @ColumnInfo(name = "anchorY")
+    private float anchorY;
+    @ColumnInfo(name = "width")
+    private float width;
+    @ColumnInfo(name = "bearing")
+    private float bearing;
+    @ColumnInfo(name = "positionO")
+    private double position0;
+    @ColumnInfo(name = "positionA")
+    private double positionA;
+    @ColumnInfo(name = "owner")
     private String owner;
+
     //constructors
 
-    public Overlay() {}
+/*    public Overlay(String photoPath) {
+        this.photoPath = photoPath;
+    }
 
-    public Overlay(int overlayID, byte[] imageByteArray, float anchorX, float anchorY, float height, float width, float bearing, double positionA, double position0, String owner) {
-        this.overlayID = overlayID;
-        this.imageByteArray = imageByteArray;
+    public Overlay(String photoPath, float anchorX, float anchorY, float width, float bearing, double positionA, double position0, String owner) {
+        this.photoPath = photoPath;
         this.anchorX = anchorX;
         this.anchorY = anchorY;
-        this.height = height;
         this.width = width;
         this.bearing = bearing;
         this.positionA = positionA;
         this.position0 = position0;
         this.owner = owner;
-    }
+    }*/
 
     public int getOverlayID() {
         return overlayID;
@@ -32,12 +51,12 @@ public class Overlay {
         this.overlayID = overlayID;
     }
 
-    public byte[] getImageByteArray() {
-        return imageByteArray;
+    public String getPhotoPath() {
+        return photoPath;
     }
 
-    public void setImageByteArray(byte[] imageByteArray) {
-        this.imageByteArray = imageByteArray;
+    public void setPhotoPath(String photoPath) {
+        this.photoPath = photoPath;
     }
 
     public float getAnchorX() {
@@ -56,13 +75,6 @@ public class Overlay {
         this.anchorY = anchorY;
     }
 
-    public float getHeight() {
-        return height;
-    }
-
-    public void setHeight(float height) {
-        this.height = height;
-    }
 
     public float getWidth() {
         return width;

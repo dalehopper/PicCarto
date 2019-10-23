@@ -8,13 +8,26 @@
         android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Take map Photo"
+        android:text="Create a new map"
         android:onClick="takePhoto"/>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <TableLayout xmlns:android= "http://schemas.android.com/apk/res/android"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:stretchColumns="*"
+            android:id="@+id/main_table"
+            android:layout_weight="1">
 
-    <Button
+        </TableLayout>
+    </ScrollView>
+
+
+<!--    <Button
         android:id="@+id/button2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="View Photo"
-        android:onClick="viewPhoto"/>
+        android:onClick="viewPhoto"/>-->
 </LinearLayout>
