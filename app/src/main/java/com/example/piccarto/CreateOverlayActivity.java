@@ -31,23 +31,27 @@ import android.Manifest;
 import androidx.room.Room;
 
 import static java.lang.Math.PI;
+import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
+import static java.lang.Math.cos;
 import static java.lang.Math.pow;
+import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
+import static java.lang.Math.tan;
 
 public class CreateOverlayActivity extends AppCompatActivity implements Serializable {
     Float x1, x2, y1, y2, bearing, height, width, dy, dx, scaleR,gpsR;
     LatLng latlng1;
     LatLng latlng2;
     //Bitmap image;
-    double longitude;
+    double longitude, coordR, pixelDist,pixelDistanceN,pixelDistanceE, distanceE, distanceN, distance;
     double latitude;
 
     int nextIndex = 0, overlayID;
     List<LatLng> latLngs = new ArrayList<LatLng>();
     double[] gpsCoords = new double[4];
     PointF knownPoint = new PointF();
-    String currentPhotoPath;
+    String currentPhotoPath, email;
     ImageView imageView;
     float[] coords = new float[4];
     float[] values = new float[9];
@@ -101,6 +105,7 @@ public class CreateOverlayActivity extends AppCompatActivity implements Serializ
 
         Intent mIntent = getIntent();
         currentPhotoPath = mIntent.getStringExtra("currentPhotoPath");
+        email = mIntent.getStringExtra("email");
         bitmap = BitmapFactory.decodeFile(currentPhotoPath);
         imageView.setImageBitmap(bitmap);
 
@@ -151,8 +156,26 @@ public class CreateOverlayActivity extends AppCompatActivity implements Serializ
                                 bearing = (float) (heading + photoHeading + 270 +720)%360;
                                 // height = scaleR*image.getHeight()*(float)(1+(gpsR-1)*sin(bearing));
                                 // width = scaleR*image.getWidth()*(float)(1+(1/gpsR-1)*cos(bearing));
+                                LatLng latlngE = new LatLng(latlng1.latitude,latlng2.longitude);
+                                LatLng latlngN = new LatLng(latlng2.latitude, latlng1.longitude);
+                                //gpsR = (float) (SphericalUtil.computeDistanceBetween(latlng1,latlngx)/ SphericalUtil.computeDistanceBetween(latlng1,latlngy));
                                 scaleR = (float) (SphericalUtil.computeDistanceBetween(latlng1,latlng2)/sqrt(pow(dx,2)+pow(dy,2)));
-                                width = scaleR*bitmap.getWidth();
+//                                pixelDist = sqrt(pow(dx,2)+pow(dy,2));
+//                                pixelDistanceN = cos(bearing*PI/180)*pixelDist;
+//                                pixelDistanceE = sin(bearing*PI/180)*pixelDist;
+//                                distance = SphericalUtil.computeDistanceBetween(latlng1,latlng2);
+
+
+                                //BELOW CODE BLOCK IS TO TEST IF INDEPENDENT SCALING OF X,Y AND N,E IS POSSIBLE:
+                             /*   distanceN = SphericalUtil.computeDistanceBetween(latlng1,latlngN);
+                                distanceE = SphericalUtil.computeDistanceBetween(latlng1,latlngE);
+
+                                if (!(abs(distanceN/dy)/abs(distanceE/dx)>2 || abs(distanceN/dy)/abs(distanceE/dx)<.5)) {}*/
+
+                                //coordR = sqrt(pow(dx+5,2)+pow(dy+5,2))/sqrt(pow(dx,2)+pow(dy+5,2));
+                                width = (float) (scaleR*bitmap.getWidth());
+                                //height = (float) (scaleR*bitmap.getHeight());
+                                        //*tan(bearing*PI/180));
                                 Overlay overlay = new Overlay();
                                 overlay.setPhotoPath(currentPhotoPath);
                                 overlay.setBearing(bearing);
@@ -161,6 +184,7 @@ public class CreateOverlayActivity extends AppCompatActivity implements Serializ
                                 overlay.setAnchorY(y1/bitmap.getHeight());
                                 overlay.setPosition0(latlng1.longitude);
                                 overlay.setPositionA(latlng1.latitude);
+                                overlay.setOwner(email);
 
                                 ;
                                 Intent intent = new Intent(CreateOverlayActivity.this, MapsActivity.class);

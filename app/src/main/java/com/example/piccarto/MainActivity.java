@@ -11,7 +11,9 @@ import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
@@ -27,6 +29,7 @@ import androidx.room.Room;
 public class MainActivity extends AppCompatActivity {
     OverlayDao overlayDao;
     Bitmap bitmap;
+    String email;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         AppDatabase database = Room.databaseBuilder(this, AppDatabase.class, "overlay-database")
@@ -35,24 +38,39 @@ public class MainActivity extends AppCompatActivity {
         overlayDao = database.overlayDao();
 
         super.onCreate(savedInstanceState);
-
+        Intent intent = getIntent();
+        email = intent.getStringExtra("email");
         setContentView(R.layout.activity_main);
-        TableLayout table = findViewById(R.id.main_table);
-        int i = overlayDao.getCount();
-            while ( i > 0) {
-                Overlay overlay = overlayDao.findById(i);
+        final TableLayout table = findViewById(R.id.main_table);
+
+        for(Overlay overlay : overlayDao.loadUserOverlays(email)){
+
 
                 LinearLayout.LayoutParams tableRowParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT);
 
-                TableRow tableRow = new TableRow(this);
+                final TableRow tableRow = new TableRow(this);
                 tableRow.setLayoutParams(tableRowParams);
+                tableRow.setGravity(Gravity.START);
                 ImageButton imageButton = new ImageButton(this);
-                final int THUMBSIZE = 500;
+                final Button deleteButton = new Button(this);
+                deleteButton.setText("Delete");
+                deleteButton.setId(overlay.getOverlayID());
+                deleteButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        overlayDao.delete(overlayDao.findById(v.getId()));
+                        table.removeView(tableRow);
+
+                    }
+                });
+
+                final int THUMBSIZE = 400;
                 bitmap = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(overlay.getPhotoPath()), (int) (1.5* THUMBSIZE),THUMBSIZE);
-                imageButton.setId(i-1);
+                imageButton.setId(overlay.getOverlayID());
                 imageButton.setImageBitmap(bitmap);
+
                 imageButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -61,21 +79,24 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(intent);
 
                     }
+
                 });
 
                 tableRow.addView(imageButton);
+                tableRow.addView(deleteButton);
                 table.addView(tableRow);
-                i = i -1;
+
             }
         }
 
 
 
 
-    public void viewPhoto(int id) {
+    public void viewPhoto() {
 
         Intent intent = new Intent(this, CreateOverlayActivity.class);
         intent.putExtra("currentPhotoPath",currentPhotoPath);
+        intent.putExtra("email", email);
         startActivity(intent);
 
     }
@@ -123,10 +144,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestcode == REQUEST_TAKE_PHOTO) {
             if (resultCode == RESULT_OK) {
-                Overlay overlay = new Overlay();
-                overlay.setPhotoPath(currentPhotoPath);
 
-                viewPhoto((int) overlayDao.insert(overlay));
+                viewPhoto();
             }
         }
     }

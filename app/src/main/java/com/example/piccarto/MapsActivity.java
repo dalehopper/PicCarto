@@ -4,9 +4,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -72,14 +74,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-/*        FloatingActionButton fabAddMap = findViewById(R.id.fabAddMap);
-        fabAddMap.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton homeButton = findViewById(R.id.fabHome);
+        homeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MapsActivity.this, ImagActivity.class);
+                Intent intent = new Intent(MapsActivity.this, MainActivity.class);
+                intent.putExtra("email", overlay.getOwner());
                 startActivity(intent);
             }
-        });*/
+        });
     }
 
     /**

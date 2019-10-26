@@ -24,6 +24,7 @@ public class SignOnActivity extends AppCompatActivity implements View.OnClickLis
     private GoogleApiClient googleApiClient;
     private static int REQ_Code = 9001;
     private static int WELCOME_DELAY = 2500;
+    String email;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -51,6 +52,7 @@ public class SignOnActivity extends AppCompatActivity implements View.OnClickLis
     private void signIn() {
 
         Intent intent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient);
+        googleApiClient.clearDefaultAccountAndReconnect();
         startActivityForResult(intent, REQ_Code);
 
     }
@@ -58,7 +60,7 @@ public class SignOnActivity extends AppCompatActivity implements View.OnClickLis
 
         if(result.isSuccess()) {
             GoogleSignInAccount account = result.getSignInAccount();
-            String email = account.getEmail();
+            email = account.getEmail();
             Email.setText(email);
             updateUI(true);
         }
@@ -74,6 +76,7 @@ public class SignOnActivity extends AppCompatActivity implements View.OnClickLis
                 @Override
                 public void run() {
                     Intent intent = new Intent(SignOnActivity.this, MainActivity.class);
+                    intent.putExtra("email",email );
                     startActivity(intent);
                     finish();
                 }

@@ -17,13 +17,12 @@
     tools:context=".MapsActivity" />
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fabAddMap"
+        android:id="@+id/fabHome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
-        android:src="@android:drawable/ic_input_add"
-        app:fabSize="auto"
-        />
+        android:src="?attr/homeAsUpIndicator"
+        app:fabSize="auto" />
     />
 
 </android.support.design.widget.CoordinatorLayout>
